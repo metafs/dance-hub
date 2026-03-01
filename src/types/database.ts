@@ -98,6 +98,14 @@ export interface PerformanceSchedule {
   start_at: string; // ISO String
 }
 
+export interface PerformanceTicketType {
+  id: string;
+  performance_id: string;
+  name: string;
+  price: string;
+  display_order?: number | null;
+}
+
 export interface PerformanceWithSchedules extends Performance {
   schedules: PerformanceSchedule[];
 }

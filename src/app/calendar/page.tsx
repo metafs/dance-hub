@@ -36,6 +36,11 @@ interface PerformanceWithSchedules extends Performance {
   performance_schedules: PerformanceSchedule[];
 }
 
+interface PerformanceQueryRow extends Performance {
+  users?: { organizer_name?: string | null } | null;
+  performance_schedules?: PerformanceSchedule[] | null;
+}
+
 const regions: Region[] = [
   "東京23区",
   "多摩エリア",
@@ -71,15 +76,18 @@ export default function CalendarPage() {
         .select(`*, users(organizer_name), performance_schedules(*)`)
         .eq("status", "active");
       if (error) throw error;
-
-      const formattedData = (data || []).map((p: any) => ({
-        ...p,
-        organizer_name: p.users?.organizer_name,
-        performance_schedules: (p.performance_schedules || []).sort(
-          (a: any, b: any) =>
-            new Date(a.start_at).getTime() - new Date(b.start_at).getTime()
-        ),
-      }));
+      const performanceRows = (data || []) as PerformanceQueryRow[];
+      const formattedData = performanceRows.map((performance) => {
+        const { users, performance_schedules, ...rest } = performance;
+        return {
+          ...rest,
+          organizer_name: users?.organizer_name || undefined,
+          performance_schedules: (performance_schedules || []).sort(
+            (a, b) =>
+              new Date(a.start_at).getTime() - new Date(b.start_at).getTime()
+          ),
+        } satisfies PerformanceWithSchedules;
+      });
       setPerformances(formattedData);
     } catch (e) {
       console.error(e);
@@ -182,7 +190,7 @@ export default function CalendarPage() {
                 value={toDate}
                 onChange={setToDate}
                 format="YYYY/MM/DD"
-                minDate={fromDate}
+                minDate={fromDate ?? undefined}
                 slotProps={{
                   textField: { variant: "standard", sx: { width: 160 } },
                 }}

@@ -6,7 +6,7 @@ import { Container, Typography, Grid } from "@mui/material";
 export const Hero = () => (
   <Container maxWidth="md" sx={{ pt: { xs: 8, md: 15 }, pb: { xs: 4, md: 6 } }}>
     <Grid container spacing={4}>
-      <Grid item xs={12} md={8}>
+      <Grid size={{ xs: 12, md: 8 }}>
         <Typography
           variant="h1"
           sx={{

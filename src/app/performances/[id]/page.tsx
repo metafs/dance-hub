@@ -9,11 +9,9 @@ import {
   CircularProgress,
   Stack,
   Button,
-  Divider,
   Link as MuiLink,
 } from "@mui/material";
 import {
-  Place as MapPinIcon,
   ConfirmationNumber as TicketIcon,
   ArrowBack as ArrowBackIcon,
   Language as WebIcon,
@@ -37,6 +35,17 @@ interface PerformanceDetail extends Performance {
   performance_schedules: PerformanceSchedule[];
   performance_ticket_types: PerformanceTicketType[];
   reviews: Review[];
+}
+
+interface PerformanceQueryRow extends Performance {
+  users?: {
+    organizer_name?: string | null;
+    organizer_profile?: string | null;
+    organizer_website?: string | null;
+  } | null;
+  performance_schedules?: PerformanceSchedule[] | null;
+  performance_ticket_types?: PerformanceTicketType[] | null;
+  reviews?: Review[] | null;
 }
 
 export default function PerformanceDetailPage({
@@ -83,29 +92,32 @@ export default function PerformanceDetailPage({
         setErrorMessage("Performance not found.");
         return;
       }
+      const performanceRow = data as PerformanceQueryRow;
 
       // データの整理とソート
       const formattedData: PerformanceDetail = {
-        ...data,
-        organizer_name: data.users?.organizer_name || "未設定",
-        organizer_profile: data.users?.organizer_profile,
-        organizer_website: data.users?.organizer_website,
+        ...performanceRow,
+        organizer_name: performanceRow.users?.organizer_name || "未設定",
+        organizer_profile: performanceRow.users?.organizer_profile || undefined,
+        organizer_website: performanceRow.users?.organizer_website || undefined,
         // スケジュールを時間順にソート
-        performance_schedules: (data.performance_schedules || []).sort(
-          (a: any, b: any) =>
+        performance_schedules: (performanceRow.performance_schedules || []).sort(
+          (a, b) =>
             new Date(a.start_at).getTime() - new Date(b.start_at).getTime()
         ),
         // チケットを並び順通りにソート
-        performance_ticket_types: (data.performance_ticket_types || []).sort(
-          (a: any, b: any) => (a.display_order || 0) - (b.display_order || 0)
-        ),
-        reviews: data.reviews || [],
+        performance_ticket_types: (
+          performanceRow.performance_ticket_types || []
+        ).sort((a, b) => (a.display_order || 0) - (b.display_order || 0)),
+        reviews: performanceRow.reviews || [],
       };
 
       setPerformance(formattedData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Fetch Error:", error);
-      setErrorMessage(error.message);
+      setErrorMessage(
+        error instanceof Error ? error.message : "不明なエラーが発生しました"
+      );
     } finally {
       setLoading(false);
     }
@@ -180,7 +192,7 @@ export default function PerformanceDetailPage({
         </Typography>
 
         <Grid container spacing={4} alignItems="flex-end">
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Stack direction="row" spacing={6}>
               <Box>
                 <Typography
@@ -259,7 +271,7 @@ export default function PerformanceDetailPage({
       <Container maxWidth="lg" sx={{ pb: 15 }}>
         <Grid container spacing={10}>
           {/* 左カラム：詳細とスケジュール */}
-          <Grid item xs={12} md={7}>
+          <Grid size={{ xs: 12, md: 7 }}>
             <Box sx={{ mb: 12 }}>
               <Typography
                 variant="h4"
@@ -314,7 +326,7 @@ export default function PerformanceDetailPage({
           </Grid>
 
           {/* 右カラム：サイドバー（チケットと場所） */}
-          <Grid item xs={12} md={5}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <Stack spacing={6} sx={{ position: "sticky", top: 100 }}>
               {/* チケットセクション */}
               <Box sx={{ p: 4, border: "2px solid black" }}>
@@ -334,7 +346,7 @@ export default function PerformanceDetailPage({
                 <Stack spacing={1.5} sx={{ mb: 4 }}>
                   {performance.performance_ticket_types &&
                   performance.performance_ticket_types.length > 0 ? (
-                    performance.performance_ticket_types.map((type: any) => (
+                    performance.performance_ticket_types.map((type) => (
                       <Box
                         key={type.id}
                         sx={{

@@ -42,6 +42,11 @@ const months = [
   "12月",
 ];
 
+interface StatsPerformanceRow {
+  region: string;
+  performance_date: string;
+}
+
 export const PerformanceStats = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
@@ -60,11 +65,12 @@ export const PerformanceStats = () => {
         .gte("performance_date", `${selectedYear}-01-01`)
         .lt("performance_date", `${selectedYear + 1}-01-01`)
         .eq("status", "active");
+      const rows = (dbData || []) as StatsPerformanceRow[];
 
       const monthlyCounts = new Array(12).fill(0);
       const regionCounts = new Map<string, number>();
 
-      dbData?.forEach((p) => {
+      rows.forEach((p) => {
         const month = new Date(p.performance_date).getMonth();
         monthlyCounts[month]++;
         regionCounts.set(p.region, (regionCounts.get(p.region) || 0) + 1);
@@ -76,7 +82,7 @@ export const PerformanceStats = () => {
           label: r,
           value: regionCounts.get(r) || 0,
         })),
-        total: dbData?.length || 0,
+        total: rows.length,
       });
     } finally {
       setLoading(false);
@@ -170,7 +176,7 @@ export const PerformanceStats = () => {
         {/* グラフエリア */}
         <Grid container spacing={5}>
           {/* 月別グラフ */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Typography
               variant="caption"
               sx={{
@@ -232,7 +238,7 @@ export const PerformanceStats = () => {
           </Grid>
 
           {/* 地域別グラフ */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Typography
               variant="caption"
               sx={{

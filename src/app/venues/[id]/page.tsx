@@ -16,6 +16,26 @@ import { EventCard } from "@/app/calendar/EventCard";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
 import { Place as PlaceIcon } from "@mui/icons-material"; // マップアイコンを追加
+import type { Performance, PerformanceSchedule, Region } from "@/types/database";
+
+interface VenueDetail {
+  id: string;
+  name: string;
+  address: string;
+  region: Region;
+  description: string;
+  website_url?: string | null;
+}
+
+interface PerformanceWithSchedules extends Performance {
+  organizer_name?: string;
+  performance_schedules: PerformanceSchedule[];
+}
+
+interface PerformanceQueryRow extends Performance {
+  users?: { organizer_name?: string | null } | null;
+  performance_schedules?: PerformanceSchedule[] | null;
+}
 
 export default function VenueDetailPage({
   params,
@@ -25,9 +45,13 @@ export default function VenueDetailPage({
   const resolvedParams = use(params);
   const id = resolvedParams.id;
 
-  const [venue, setVenue] = useState<any>(null);
-  const [upcomingPerformances, setUpcomingPerformances] = useState<any[]>([]);
-  const [pastPerformances, setPastPerformances] = useState<any[]>([]);
+  const [venue, setVenue] = useState<VenueDetail | null>(null);
+  const [upcomingPerformances, setUpcomingPerformances] = useState<
+    PerformanceWithSchedules[]
+  >([]);
+  const [pastPerformances, setPastPerformances] = useState<
+    PerformanceWithSchedules[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
 
@@ -45,9 +69,10 @@ export default function VenueDetailPage({
         .select("*")
         .eq("id", id)
         .single();
-      setVenue(venueData);
+      const venueRecord = (venueData as VenueDetail | null) ?? null;
+      setVenue(venueRecord);
 
-      if (venueData) {
+      if (venueRecord) {
         // 2. 会場名に紐づく公演を取得
         const { data: perfData } = await supabase
           .from("performances")
@@ -58,16 +83,17 @@ export default function VenueDetailPage({
             performance_schedules(*)
           `
           )
-          .eq("venue_name", venueData.name)
+          .eq("venue_name", venueRecord.name)
           .eq("status", "active");
 
         const now = dayjs();
-        const upcoming: any[] = [];
-        const past: any[] = [];
+        const upcoming: PerformanceWithSchedules[] = [];
+        const past: PerformanceWithSchedules[] = [];
+        const performanceRows = (perfData || []) as PerformanceQueryRow[];
 
-        perfData?.forEach((perf) => {
+        performanceRows.forEach((perf) => {
           const schedules = (perf.performance_schedules || []).sort(
-            (a: any, b: any) =>
+            (a, b) =>
               dayjs(a.start_at).unix() - dayjs(b.start_at).unix()
           );
 
@@ -77,7 +103,7 @@ export default function VenueDetailPage({
             ...perf,
             organizer_name: perf.users?.organizer_name || "主催者不明",
             performance_schedules: schedules,
-          };
+          } as PerformanceWithSchedules;
 
           const lastDate = dayjs(schedules[schedules.length - 1].start_at);
           if (lastDate.isAfter(now)) {

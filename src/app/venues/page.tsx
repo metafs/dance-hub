@@ -74,7 +74,7 @@ export default function VenuesPage() {
         .select("*")
         .order("name", { ascending: true });
       if (error) throw error;
-      setVenues(data || []);
+      setVenues((data as Venue[]) || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -194,7 +194,7 @@ export default function VenuesPage() {
       {/* グリッド表示 */}
       <Grid container spacing={3}>
         {filteredVenues.map((venue) => (
-          <Grid item xs={12} sm={6} md={4} key={venue.id}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={venue.id}>
             <ButtonBase
               component={NextLink}
               href={`/venues/${venue.id}`} // ここを変更

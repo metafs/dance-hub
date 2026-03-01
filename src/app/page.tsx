@@ -26,7 +26,7 @@ const NavigationCard = ({
   href: string;
   dark?: boolean;
 }) => (
-  <Grid item xs={12} sm={6} md={4}>
+  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
     <ButtonBase
       component={NextLink}
       href={href}

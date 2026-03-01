@@ -6,7 +6,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { PickersDay, PickersDayProps } from "@mui/x-date-pickers/PickersDay";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/ja";
 
 interface CalendarCardProps {
@@ -15,14 +15,12 @@ interface CalendarCardProps {
 }
 
 // 公演がある日を黒丸で強調するためのカスタムDayコンポーネント
-function ServerDay(
-  props: PickersDayProps<Dayjs> & { highlightedDays?: string[] }
-) {
+function ServerDay(props: PickersDayProps & { highlightedDays?: string[] }) {
   const { highlightedDays = [], day, outsideCurrentMonth, ...other } = props;
 
   const isSelected =
     !props.outsideCurrentMonth &&
-    highlightedDays.indexOf(day.format("YYYY-MM-DD")) >= 0;
+    highlightedDays.includes(dayjs(day).format("YYYY-MM-DD"));
 
   return (
     <Badge
@@ -65,6 +63,10 @@ export const CalendarCard = ({
   performanceDates,
   onDateChange,
 }: CalendarCardProps) => {
+  const DayWithHighlights = (props: PickersDayProps) => (
+    <ServerDay {...props} highlightedDays={performanceDates} />
+  );
+
   return (
     <Paper
       elevation={0}
@@ -93,12 +95,7 @@ export const CalendarCard = ({
         <DateCalendar
           onChange={onDateChange}
           slots={{
-            day: ServerDay,
-          }}
-          slotProps={{
-            day: {
-              highlightedDays: performanceDates,
-            } as any,
+            day: DayWithHighlights,
           }}
           sx={{
             width: "100%",

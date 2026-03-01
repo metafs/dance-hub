@@ -25,7 +25,7 @@ export const Footer = () => {
     >
       <Container maxWidth="lg">
         <Grid container spacing={8}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2 }}>
               DANCE HUB
             </Typography>
@@ -38,7 +38,7 @@ export const Footer = () => {
             { title: "情報", items: ["私たちについて", "お問い合わせ"] },
             { title: "主催者向け", items: ["公演を掲載する", "ログイン"] },
           ].map((section) => (
-            <Grid item xs={6} md={3} key={section.title}>
+            <Grid size={{ xs: 6, md: 3 }} key={section.title}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>
                 {section.title}
               </Typography>

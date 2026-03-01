@@ -95,7 +95,7 @@ export const EventCard = ({
 
           <Grid container spacing={4}>
             {/* 左：会場詳細 */}
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Typography variant="body2" sx={{ mb: 2, fontWeight: 700 }}>
                 {performance.venue_address || "住所情報なし"}
               </Typography>
@@ -109,7 +109,7 @@ export const EventCard = ({
             </Grid>
 
             {/* 右：他日程 */}
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Typography
                 variant="caption"
                 sx={{ fontWeight: 900, display: "block", mb: 2 }}
