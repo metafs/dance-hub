@@ -29,6 +29,18 @@ import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/ja";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import type { Region } from "@/types/database";
+
+interface VenueOption {
+  id: string;
+  name: string;
+  region: Region;
+}
+
+interface TicketTypeForm {
+  name: string;
+  price: string;
+}
 
 export default function NewPerformancePage() {
   const router = useRouter();
@@ -36,70 +48,20 @@ export default function NewPerformancePage() {
   // 1. 状態管理（すべて関数冒頭に配置）
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [venues, setVenues] = useState<any[]>([]);
+  const [venues, setVenues] = useState<VenueOption[]>([]);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedVenueId, setSelectedVenueId] = useState("");
   const [ticketUrl, setTicketUrl] = useState("");
 
-  // 会場新規作成の状態
-  const [isCreatingVenue, setIsCreatingVenue] = useState(false);
-  const [newVenueName, setNewVenueName] = useState("");
-  const [newVenueAddress, setNewVenueAddress] = useState("");
-  const [newVenueRegion, setNewVenueRegion] = useState("");
-
   // 動的リストの状態
   const [schedules, setSchedules] = useState<Dayjs[]>([
     dayjs().add(1, "day").hour(19).minute(0),
   ]);
-  const [ticketTypes, setTicketTypes] = useState([{ name: "一般", price: "" }]);
-
-  // 地域の選択肢
-  const regions = [
-    "東京23区",
-    "多摩エリア",
-    "神奈川",
-    "埼玉",
-    "千葉",
-    "群馬",
-    "栃木",
-    "茨城",
-  ];
-
-  // 会場新規作成のハンドラー
-  const handleCreateVenue = async () => {
-    if (!newVenueName.trim() || !newVenueAddress.trim() || !newVenueRegion) {
-      setError("会場名、住所、地域をすべて入力してください");
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from("venues")
-        .insert({
-          name: newVenueName.trim(),
-          address: newVenueAddress.trim(),
-          region: newVenueRegion,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // 新しい会場をリストに追加
-      setVenues([...venues, data]);
-      setSelectedVenueId(data.id);
-
-      // フォームをリセット
-      setNewVenueName("");
-      setNewVenueAddress("");
-      setNewVenueRegion("");
-      setIsCreatingVenue(false);
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
+  const [ticketTypes, setTicketTypes] = useState<TicketTypeForm[]>([
+    { name: "一般", price: "" },
+  ]);
 
   // 会場データの取得
   useEffect(() => {
@@ -108,7 +70,7 @@ export default function NewPerformancePage() {
         .from("venues")
         .select("id, name, region")
         .order("name");
-      if (data) setVenues(data);
+      if (data) setVenues(data as VenueOption[]);
     };
     fetchVenues();
   }, []);
@@ -123,6 +85,8 @@ export default function NewPerformancePage() {
       // --- バリデーション ---
       if (!title.trim()) throw new Error("タイトルを入力してください");
       if (!selectedVenueId) throw new Error("会場を選択してください");
+      if (schedules.length === 0)
+        throw new Error("最低 1 つのスケジュールを設定してください");
       const selectedVenue = venues.find((v) => v.id === selectedVenueId);
       if (!selectedVenue) throw new Error("選択された会場が見つかりません");
 
@@ -146,10 +110,14 @@ export default function NewPerformancePage() {
         .single();
 
       if (perfError) throw perfError;
+      const createdPerformanceId = (perfData as { id: string } | null)?.id;
+      if (!createdPerformanceId) {
+        throw new Error("公演IDの取得に失敗しました");
+      }
 
       // --- C. スケジュールの保存 ---
       const schedInserts = schedules.map((date) => ({
-        performance_id: perfData.id,
+        performance_id: createdPerformanceId,
         start_at: date.toISOString(),
       }));
       const { error: schedErr } = await supabase
@@ -161,7 +129,7 @@ export default function NewPerformancePage() {
       const ticketInserts = ticketTypes
         .filter((t) => t.name && t.price)
         .map((t, index) => ({
-          performance_id: perfData.id,
+          performance_id: createdPerformanceId,
           name: t.name,
           price: t.price,
           display_order: index,
@@ -174,9 +142,13 @@ export default function NewPerformancePage() {
         if (ticketErr) throw ticketErr;
       }
 
-      router.push(`/performances/${perfData.id}`);
-    } catch (err: any) {
-      setError(err.message);
+      router.push(`/performances/${createdPerformanceId}`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("不明なエラーが発生しました");
+      }
       setLoading(false);
     }
   };
@@ -226,7 +198,7 @@ export default function NewPerformancePage() {
             </Box>
 
             <Grid container spacing={4}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl variant="standard" fullWidth required>
                   <InputLabel sx={{ fontWeight: 900, color: "black" }}>
                     会場
@@ -243,7 +215,7 @@ export default function NewPerformancePage() {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   label="チケット / 申込URL"

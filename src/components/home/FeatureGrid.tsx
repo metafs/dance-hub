@@ -13,14 +13,14 @@ export const FeatureGrid = ({ calendarNode }: FeatureGridProps) => {
     <Box sx={{ py: 8 }}>
       <Grid container spacing={3}>
         {/* カレンダーカード (左側) */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           {calendarNode}
         </Grid>
 
         {/* 右側の情報カード群 */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Grid container spacing={3} sx={{ height: "100%" }}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -41,7 +41,7 @@ export const FeatureGrid = ({ calendarNode }: FeatureGridProps) => {
                 <ArrowForwardIcon />
               </Paper>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -62,7 +62,7 @@ export const FeatureGrid = ({ calendarNode }: FeatureGridProps) => {
                 <ArrowForwardIcon />
               </Paper>
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Paper
                 elevation={0}
                 sx={{
